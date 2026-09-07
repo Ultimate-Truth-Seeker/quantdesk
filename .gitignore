@@ -6,3 +6,4 @@ venv/
 mcp_log.jsonl
 workspace/
 .env
+servers/quant_mcp/data/
