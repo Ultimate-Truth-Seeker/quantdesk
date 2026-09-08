@@ -6,11 +6,6 @@ Valle de Guatemala. QuantDesk uses Claude (via the Anthropic API) as its
 coordinating LLM and the **Model Context Protocol (MCP)** to give that LLM
 tools: real financial calculations, file access, and version control.
 
-> Status: this README covers **weeks 1–3** of the project — the host
-> chatbot, the JSON-RPC logger, the official Filesystem/Git MCP servers,
-> and the custom `quant-mcp` server. The remote MCP server, classmates'
-> servers, and the Wireshark analysis (weeks 4–5) are not part of this
-> delivery yet.
 
 ## What it does
 
@@ -81,9 +76,9 @@ subprocesses by the host — see `host/config.py`.
    ```
    This creates `servers/quant_mcp/data/<TICKER>.csv` for 10 tickers.
 
-4. **Set your Anthropic API key:**
+4. **Set your API key:**
    ```bash
-   export ANTHROPIC_API_KEY=sk-ant-...      # Windows: set ANTHROPIC_API_KEY=...
+   export GEMINI_API_KEY=sk-ant-...      # Windows: set ANTHROPIC_API_KEY=...
    ```
 
 5. **Run the host:**
@@ -122,7 +117,7 @@ factor (so tickers are realistically correlated, not independent) and
 per-ticker drift/volatility parameters. It's seeded (`SEED = 42`) for
 reproducibility.
 
-**Before the final submission, consider swapping in real historical
+**You may consider swapping in real historical
 data** — e.g. with `yfinance`:
 ```python
 import yfinance as yf
@@ -185,6 +180,9 @@ python -m pytest tests/ -v
 ```
 quantdesk/
 ├── host/
+|   ├── providers/
+│   │   ├── anthropic_provider.py             
+│   │   └── gemini_provider.py      
 │   ├── main.py                 # chat loop entry point
 │   ├── config.py                # server list + settings
 │   ├── mcp_client_manager.py    # connects & routes to all MCP servers
@@ -202,11 +200,3 @@ quantdesk/
 ├── requirements.txt
 └── README.md
 ```
-
-## Known limitations (weeks 1–3 scope)
-
-- Price data is synthetic (see "About the price data" above).
-- No remote MCP server yet (`market-data-mcp` — week 4).
-- No classmates' MCP servers integrated yet (week 4).
-- No Wireshark capture/analysis yet (week 5) — there's no remote/HTTP
-  traffic to capture until the remote server exists.
