@@ -108,6 +108,27 @@ subprocesses by the host — see `host/config.py`.
    Every MCP request/response is printed live and appended to
    `mcp_log.jsonl` at the project root (point 3 of the assignment).
 
+## Optional browser interface
+
+The terminal interface remains the default. To use the browser interface,
+install the dependencies and launch the host with `UI_MODE=web`:
+
+```bash
+source venv/bin/activate
+export LLM_PROVIDER=gemini       # or anthropic
+export GEMINI_API_KEY=...        # or ANTHROPIC_API_KEY=...
+export UI_MODE=web
+python host/main.py
+```
+
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765). The host and MCP
+servers still run in the same process, and browser chat uses the same MCP
+tool routing and JSON-RPC logging as the terminal provider. Configure the
+bind address and port with `WEB_HOST` and `WEB_PORT` if needed.
+
+To return to the terminal interface, unset `UI_MODE` or set
+`UI_MODE=terminal`.
+
 ## About the price data
 
 This sandbox/environment has no network access to financial data

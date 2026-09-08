@@ -119,8 +119,16 @@ if LLM_PROVIDER not in ("anthropic", "gemini"):
         f"Unknown LLM_PROVIDER '{LLM_PROVIDER}'. Use 'anthropic' or 'gemini'."
     )
 
+# --- Interface selection ---------------------------------------------------
+# The terminal remains the default. Use UI_MODE=web to launch the browser UI.
+UI_MODE = os.environ.get("UI_MODE", "web").strip().lower()
+if UI_MODE not in ("terminal", "web"):
+    raise ValueError(f"Unknown UI_MODE '{UI_MODE}'. Use 'terminal' or 'web'.")
+WEB_HOST = os.environ.get("WEB_HOST", "127.0.0.1")
+WEB_PORT = int(os.environ.get("WEB_PORT", "8765"))
+
 # -- Anthropic --
-ANTHROPIC_MODEL = "claude-sonnet-4-5"
+ANTHROPIC_MODEL = "claude-haiku-4-5"
 MAX_TOKENS = 2048
 MAX_TOOL_ITERATIONS = 8  # safety cap on chained tool calls per user turn (manual loop)
 
@@ -128,5 +136,5 @@ MAX_TOOL_ITERATIONS = 8  # safety cap on chained tool calls per user turn (manua
 # Note: Gemini's built-in MCP support (passing a ClientSession directly as
 # a tool) is an experimental feature of the google-genai SDK as of this
 # writing — see README.md "Gemini provider" for details and known limits.
-GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MODEL = "gemini-3.7-flash"
 GEMINI_MAX_REMOTE_CALLS = 8  # safety cap on chained tool calls per user turn (automatic loop)

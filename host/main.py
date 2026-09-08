@@ -29,7 +29,7 @@ import asyncio
 import os
 import sys
 
-from config import LLM_PROVIDER, SERVERS, ensure_git_initialized
+from config import LLM_PROVIDER, SERVERS, UI_MODE, WEB_HOST, WEB_PORT, ensure_git_initialized
 from logger import JsonRpcLogger
 from mcp_client_manager import MCPClientManager
 
@@ -61,7 +61,12 @@ async def run_chat():
         print(f"Discovered {len(manager.tools)} tool(s) total.\n")
 
         try:
-            await provider.run(manager, api_key)
+            if UI_MODE == "web":
+                from web_ui import run as run_web_ui
+
+                await run_web_ui(manager, api_key, WEB_HOST, WEB_PORT)
+            else:
+                await provider.run(manager, api_key)
         except Exception as exc:  # noqa: BLE001 — surface provider setup errors cleanly
             print(f"ERROR: {exc}")
             sys.exit(1)
