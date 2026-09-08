@@ -173,7 +173,7 @@ class WebChatSession:
                 except Exception as exc:  # noqa: BLE001
                     payload = {"error": str(exc)}
                 function_responses.append(types.Part.from_function_response(name=call.name, response=payload))
-            response = await self.gemini_chat.send_message(types.Content(role="user", parts=function_responses))
+            response = await self.gemini_chat.send_message(function_responses)
         return "(stopped: reached the tool-call limit for this request)"
 
     async def _send_anthropic(self, text: str) -> str:

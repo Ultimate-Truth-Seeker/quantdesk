@@ -139,9 +139,7 @@ async def run(manager: MCPClientManager, api_key: str) -> None:
                         )
                     )
 
-                response = await chat.send_message(
-                    types.Content(role="user", parts=function_responses)
-                )
+                response = await chat.send_message(function_responses)
             else:
                 print("gemini> (stopped: reached max tool-call iterations for this turn)\n")
         except Exception as exc:  # noqa: BLE001
