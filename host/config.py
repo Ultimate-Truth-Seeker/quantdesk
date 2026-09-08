@@ -1,11 +1,13 @@
 """
-Configuration for every MCP server the host connects to.
+Configuration for every MCP server the host connects to, plus which LLM
+provider (Anthropic or Gemini) the host uses to drive the conversation.
 
-Each entry is either:
+Each server entry is either:
     - StdioServerConfig: launched as a local subprocess (Filesystem MCP,
-      Git MCP, quant-mcp all fall here for weeks 1-3).
-    - HttpServerConfig: connected over streamable HTTP (the remote
-      market-data server from week 4 — see remote/market_data_mcp/).
+      Git MCP, quant-mcp, and classmates' servers all fall here).
+    - HttpServerConfig: connected over streamable HTTP. Not currently used
+      (point 7 of the assignment, a remote MCP server, was dropped from
+      the requirements) but MCPClientManager still supports it if needed.
 
 Edit SERVERS below to match your machine (paths, npx/uvx availability, etc.)
 before running the host. See README.md "Human setup steps" for details.
@@ -92,29 +94,39 @@ SERVERS: list[StdioServerConfig | HttpServerConfig] = [
         cwd=os.path.join(REPO_ROOT, "servers", "quant_mcp"),
         enabled=True,
     ),
-    # 6) Two classmates' MCP servers — fill these in during week 4 once
-    #    the class publishes their repos. Left disabled for now.
-    # StdioServerConfig(
-    #     name="classmate-server-1",
-    #     command=sys.executable,
-    #     args=["/path/to/classmate1/server.py"],
-    #     enabled=False,
-    # ),
-    # StdioServerConfig(
-    #     name="classmate-server-2",
-    #     command="node",
-    #     args=["/path/to/classmate2/server.js"],
-    #     enabled=False,
-    # ),
-    # 7) Remote MCP server (deployed to Google Cloud Run in week 4).
-    # HttpServerConfig(
-    #     name="market-data-mcp",
-    #     url="https://market-data-mcp-xxxxx.a.run.app/mcp",
-    #     enabled=False,
-    # ),
+    # 6) Classmates' MCP servers — fill these in once the class publishes
+    #    their repos. Left disabled for now.
+    StdioServerConfig(
+            name="rrhh construction",
+            command="/Users/macbookproroberto/Documents/quantdesk/servers/mcp-server-rrhh-construccion/.venv/bin/python",
+            args=[os.path.join(REPO_ROOT, "servers", "mcp-server-rrhh-construccion", "server.py")],
+            enabled=True,
+    ),
+    StdioServerConfig(
+            name="delivery server",
+            command="/opt/homebrew/bin/uv",
+            args=["run", "--directory", "/Users/macbookproroberto/Documents/quantdesk/servers/delivery-mcp-server", "python", "-m", "route_optimizer.server"],
+            enabled=True,
+    ),
 ]
 
 
+# --- LLM provider selection ------------------------------------------------
+# Switch providers with:  export LLM_PROVIDER=anthropic   (or gemini)
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini").strip().lower()
+if LLM_PROVIDER not in ("anthropic", "gemini"):
+    raise ValueError(
+        f"Unknown LLM_PROVIDER '{LLM_PROVIDER}'. Use 'anthropic' or 'gemini'."
+    )
+
+# -- Anthropic --
 ANTHROPIC_MODEL = "claude-sonnet-4-5"
 MAX_TOKENS = 2048
-MAX_TOOL_ITERATIONS = 8  # safety cap on chained tool calls per user turn
+MAX_TOOL_ITERATIONS = 8  # safety cap on chained tool calls per user turn (manual loop)
+
+# -- Gemini --
+# Note: Gemini's built-in MCP support (passing a ClientSession directly as
+# a tool) is an experimental feature of the google-genai SDK as of this
+# writing — see README.md "Gemini provider" for details and known limits.
+GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MAX_REMOTE_CALLS = 8  # safety cap on chained tool calls per user turn (automatic loop)

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import anyio
+import re
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
@@ -23,6 +24,14 @@ from mcp.client.streamable_http import streamablehttp_client
 from config import HttpServerConfig, StdioServerConfig
 from jsonrpc_tap import JsonRpcTap
 from logger import JsonRpcLogger
+
+
+def _safe_tool_name(name: str) -> str:
+    """Return a function name accepted by the LLM provider APIs."""
+    safe_name = re.sub(r"[^A-Za-z0-9_.:-]", "_", name)
+    if not safe_name or not re.match(r"[A-Za-z_]", safe_name):
+        safe_name = f"_{safe_name}"
+    return safe_name[:128]
 
 
 @dataclass
@@ -87,7 +96,7 @@ class MCPClientManager:
 
         tools_result = await session.list_tools()
         for tool in tools_result.tools:
-            qualified = f"{cfg.name}__{tool.name}"
+            qualified = _safe_tool_name(f"{cfg.name}__{tool.name}")
             self.tools[qualified] = ToolInfo(
                 server_name=cfg.name,
                 tool_name=tool.name,
@@ -114,6 +123,26 @@ class MCPClientManager:
             }
             for qualified, info in self.tools.items()
         ]
+
+    def raw_tool_name_collisions(self) -> dict[str, list[str]]:
+        """
+        Tool names (WITHOUT the server-name prefix) that are exposed by more
+        than one connected server.
+
+        Why this matters for Gemini: unlike the Anthropic path above (which
+        always uses the namespaced "server__tool" name), Gemini's built-in
+        MCP support takes raw mcp.ClientSession objects directly and merges
+        their tools by RAW name across every session passed in `tools=[...]`.
+        If two servers both expose a tool with the same name, the
+        google-genai SDK raises `ValueError: Tool <name> is already defined
+        for the request` at call time. Check this BEFORE starting a Gemini
+        chat so you get a clear, actionable error instead of a crash deep
+        inside the SDK.
+        """
+        by_name: dict[str, list[str]] = {}
+        for info in self.tools.values():
+            by_name.setdefault(info.tool_name, []).append(info.server_name)
+        return {name: servers for name, servers in by_name.items() if len(servers) > 1}
 
     async def call_tool(self, qualified_name: str, arguments: dict) -> Any:
         info = self.tools.get(qualified_name)

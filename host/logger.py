@@ -56,6 +56,9 @@ class JsonRpcLogger:
         if "method" in payload:
             kind = "request" if "id" in payload else "notification"
             method = payload.get("method")
+            if method == "tools/call":
+                tool_name = payload.get("params", {}).get("name", "?")
+                return f"{arrow} {kind}: tools/call({tool_name}) (id={payload.get('id')})"
             return f"{arrow} {kind}: {method} (id={payload.get('id')})"
         if "result" in payload:
             return f"{arrow} response (id={payload.get('id')}): OK"
